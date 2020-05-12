@@ -70,8 +70,20 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
      */
     protected AbstractChannel(Channel parent) {
         this.parent = parent;
+        /**
+         * 每个channel 都有个唯一Id
+         */
         id = newId();
+        /**
+         * 这里还是要注意下哦，对于服务端是 NioServerSocketChannel 他的父类是
+         * @see io.netty.channel.nio.AbstractNioMessageChannel
+         * 所以这里调用的是这个父类的方法，放回的是
+         * @see io.netty.channel.nio.AbstractNioMessageChannel.NioMessageUnsafe
+         */
         unsafe = newUnsafe();
+        /**
+         * Netty 大动脉
+         */
         pipeline = newChannelPipeline();
     }
 
@@ -462,6 +474,10 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 return;
             }
 
+            /**
+             * 设置NioServerSocketChannel的线程 这里不怎么明白
+             * 先记住这个EventLoop 是 bossGroup中child[]中的一个NioEventLoop线程
+             */
             AbstractChannel.this.eventLoop = eventLoop;
 
             if (eventLoop.inEventLoop()) {
@@ -505,6 +521,9 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 pipeline.fireChannelRegistered();
                 // Only fire a channelActive if the channel has never been registered. This prevents firing
                 // multiple channel actives if the channel is deregistered and re-registered.
+                /**
+                 * 住一下这里了 这里返回的会是false
+                 */
                 if (isActive()) {
                     if (firstRegistration) {
                         pipeline.fireChannelActive();
@@ -545,6 +564,9 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                         "address (" + localAddress + ") anyway as requested.");
             }
 
+            /**
+             * 同样这里开始是返回false
+             */
             boolean wasActive = isActive();
             try {
                 doBind(localAddress);
@@ -554,10 +576,16 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 return;
             }
 
+            /**
+             * 经过上面的doBind方法后，这里isActive()就会返回true
+             */
             if (!wasActive && isActive()) {
                 invokeLater(new Runnable() {
                     @Override
                     public void run() {
+                        /**
+                         * 第一次调用fireChannelActive方法，是在这里呀
+                         */
                         pipeline.fireChannelActive();
                     }
                 });

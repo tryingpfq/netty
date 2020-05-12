@@ -27,6 +27,7 @@ import io.netty.util.internal.PlatformDependent;
 import io.netty.util.internal.SuppressJava6Requirement;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+import sun.nio.ch.ServerSocketChannelImpl;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -72,6 +73,10 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
      * Create a new instance
      */
     public NioServerSocketChannel() {
+        /**
+         * 有必要了解下newSocket这个方法，放回的是什么
+         * @see ServerSocketChannelImpl 这是jdk的类
+         */
         this(newSocket(DEFAULT_SELECTOR_PROVIDER));
     }
 
@@ -87,6 +92,10 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
      */
     public NioServerSocketChannel(ServerSocketChannel channel) {
         super(null, channel, SelectionKey.OP_ACCEPT);
+        /**
+         * 这里暂时不动 但先了解下是有关NioServerSocketChannel的相关配置吧，
+         * 并且绑定了serverSocket
+         */
         config = new NioServerSocketChannelConfig(this, javaChannel().socket());
     }
 
@@ -131,6 +140,9 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
     @Override
     protected void doBind(SocketAddress localAddress) throws Exception {
         if (PlatformDependent.javaVersion() >= 7) {
+            /**
+             * 这里就是jdk里面的方法了 jdk成的端口绑定
+             */
             javaChannel().bind(localAddress, config.getBacklog());
         } else {
             javaChannel().socket().bind(localAddress, config.getBacklog());

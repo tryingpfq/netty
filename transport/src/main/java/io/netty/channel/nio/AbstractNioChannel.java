@@ -77,10 +77,22 @@ public abstract class AbstractNioChannel extends AbstractChannel {
      * @param readInterestOp    the ops to set to receive data from the {@link SelectableChannel}
      */
     protected AbstractNioChannel(Channel parent, SelectableChannel ch, int readInterestOp) {
+        /**
+         * 这个parent是null
+         */
         super(parent);
+        /**
+         * 设置ch ServerSocketChannelImpl
+         */
         this.ch = ch;
+        /**
+         * SelectionKey.OP_ACCEPT 标示可接受连接时间
+         */
         this.readInterestOp = readInterestOp;
         try {
+            /**
+             * 毕竟是NIO 那肯定是非阻塞的哦
+             */
             ch.configureBlocking(false);
         } catch (IOException e) {
             try {
@@ -377,6 +389,11 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         boolean selected = false;
         for (;;) {
             try {
+                /**
+                 * 这里就是jdk中nio注册了
+                 * javaChannel()这个方法中还记得是什么东西吗，是在初始化NioServerSocketChannel的时候创建的
+                 * sun.nio.ch.ServerSocketChannelImpl
+                 */
                 selectionKey = javaChannel().register(eventLoop().unwrappedSelector(), 0, this);
                 return;
             } catch (CancelledKeyException e) {
@@ -402,6 +419,9 @@ public abstract class AbstractNioChannel extends AbstractChannel {
     @Override
     protected void doBeginRead() throws Exception {
         // Channel.read() or ChannelHandlerContext.read() was called
+        /**
+         * 这里的this.selectionKey就是我们在前面register步骤返回的对象，前面我们在register的时候，注册测ops是0
+         */
         final SelectionKey selectionKey = this.selectionKey;
         if (!selectionKey.isValid()) {
             return;

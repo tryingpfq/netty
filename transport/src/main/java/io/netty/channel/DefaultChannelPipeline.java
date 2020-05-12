@@ -90,10 +90,18 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     private boolean registered;
 
     protected DefaultChannelPipeline(Channel channel) {
+        /**
+         * 对这个pipeline 绑定NioServerSocketChannel
+         * 其实Channel 和 pipeline 是相互引用的
+         */
         this.channel = ObjectUtil.checkNotNull(channel, "channel");
         succeededFuture = new SucceededChannelFuture(channel, null);
         voidPromise =  new VoidChannelPromise(channel, true);
 
+        /**
+         * 这里先初始化pipeline 的 头部和尾部
+         * pipeline 其实就是一个Chain
+         */
         tail = new TailContext(this);
         head = new HeadContext(this);
 

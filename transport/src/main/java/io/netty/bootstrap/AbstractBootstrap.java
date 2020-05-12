@@ -26,6 +26,7 @@ import io.netty.channel.DefaultChannelPromise;
 import io.netty.channel.EventLoop;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.ReflectiveChannelFactory;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.GlobalEventExecutor;
@@ -74,6 +75,9 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     AbstractBootstrap(AbstractBootstrap<B, C> bootstrap) {
         group = bootstrap.group;
         channelFactory = bootstrap.channelFactory;
+        /**
+         * 如果有设置handler 在这里就会进行赋值
+         */
         handler = bootstrap.handler;
         localAddress = bootstrap.localAddress;
         synchronized (bootstrap.options) {
@@ -91,6 +95,9 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         if (this.group != null) {
             throw new IllegalStateException("group set already");
         }
+        /**
+         *  设置boss线程组 目前我觉得这个就是accept线程，并且一个端口只需要一条线程即可
+         */
         this.group = group;
         return self();
     }
@@ -268,6 +275,11 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         return doBind(ObjectUtil.checkNotNull(localAddress, "localAddress"));
     }
 
+    /**
+     * 这里对 Channel 进行初始化和注册
+     * @param localAddress 需要监听绑定的地址
+     * @return
+     */
     private ChannelFuture doBind(final SocketAddress localAddress) {
         final ChannelFuture regFuture = initAndRegister();
         final Channel channel = regFuture.channel();
@@ -275,6 +287,10 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             return regFuture;
         }
 
+        /**
+         *看完上面的init 和 register
+         * 接下来看这个doBind0方法
+         */
         if (regFuture.isDone()) {
             // At this point we know that the registration was complete and successful.
             ChannelPromise promise = channel.newPromise();
@@ -307,6 +323,13 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     final ChannelFuture initAndRegister() {
         Channel channel = null;
         try {
+            /**
+             * 这个是怎么创建的呢 反射
+             * 这个factory是这个
+             * @see io.netty.channel.ReflectiveChannelFactory 目标类对于服务端来说自然是 NioServerSocketChannel
+             * 接下来有必要去看下
+             * @link: {@link NioServerSocketChannel#NioServerSocketChannel()}
+             */
             channel = channelFactory.newChannel();
             init(channel);
         } catch (Throwable t) {
@@ -320,6 +343,11 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             return new DefaultChannelPromise(new FailedChannel(), GlobalEventExecutor.INSTANCE).setFailure(t);
         }
 
+        /**
+         * 接下来肯定是要看这个方法了
+         * Group 是什么呢 就是我们说的bossGroup 可以看下NioEventLoopGrop的初始会过程
+         * 记住一点就好 里面的 child[] 的选项是NioEvetLoop 也就是一条IO线程
+         */
         ChannelFuture regFuture = config().group().register(channel);
         if (regFuture.cause() != null) {
             if (channel.isRegistered()) {
@@ -349,6 +377,9 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
 
         // This method is invoked before channelRegistered() is triggered.  Give user handlers a chance to set up
         // the pipeline in its channelRegistered() implementation.
+        /**
+         * 这个EventLoop就是NioEventLoop 里面的执行有待于研究
+         */
         channel.eventLoop().execute(new Runnable() {
             @Override
             public void run() {

@@ -227,6 +227,9 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     private void invokeChannelActive() {
         if (invokeHandler()) {
             try {
+                /**
+                 * 进入headContext中
+                 */
                 ((ChannelInboundHandler) handler()).channelActive(this);
             } catch (Throwable t) {
                 invokeExceptionCaught(t);
@@ -485,7 +488,15 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
             return promise;
         }
 
+        /**
+         * 这里放回的应该是head
+         */
         final AbstractChannelHandlerContext next = findContextOutbound(MASK_BIND);
+        /**
+         * 看到这个应该知道是什么吧
+         * 就是在下面方法中设置的
+         * io.netty.channel.AbstractChannel.AbstractUnsafe#register()
+         */
         EventExecutor executor = next.executor();
         if (executor.inEventLoop()) {
             next.invokeBind(localAddress, promise);
@@ -503,6 +514,10 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     private void invokeBind(SocketAddress localAddress, ChannelPromise promise) {
         if (invokeHandler()) {
             try {
+                /**
+                 * 这里会进入进入 HeadContext中
+                 * 仔细看下，为什么会是out呢，记住head比较特殊，既实现了out也实现了in
+                 */
                 ((ChannelOutboundHandler) handler()).bind(this, localAddress, promise);
             } catch (Throwable t) {
                 notifyOutboundHandlerException(t, promise);
@@ -683,6 +698,9 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     private void invokeRead() {
         if (invokeHandler()) {
             try {
+                /**
+                 * 看到这里 我又想到了HeadContex
+                 */
                 ((ChannelOutboundHandler) handler()).read(this);
             } catch (Throwable t) {
                 invokeExceptionCaught(t);
