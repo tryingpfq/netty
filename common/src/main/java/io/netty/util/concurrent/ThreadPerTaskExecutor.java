@@ -29,6 +29,10 @@ public final class ThreadPerTaskExecutor implements Executor {
 
     @Override
     public void execute(Runnable command) {
+        /**
+         *  有必要进去看看
+         *  启动这个FastThreadLocalThread后，NioEventLoop的run()方法就会得到执行
+         */
         threadFactory.newThread(command).start();
     }
 }

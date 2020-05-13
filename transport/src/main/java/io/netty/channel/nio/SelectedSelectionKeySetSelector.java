@@ -59,11 +59,18 @@ final class SelectedSelectionKeySetSelector extends Selector {
     @Override
     public int select(long timeout) throws IOException {
         selectionKeys.reset();
+        /**
+         * 这里就是会导致空轮询的地方，因为如果底层抛异常的话，
+         * 就会终止阻塞时间，然后上层可能出现空轮询 但netty做了处理
+         */
         return delegate.select(timeout);
     }
 
     @Override
     public int select() throws IOException {
+        /**
+         * reset方法，就是清空key数组
+         */
         selectionKeys.reset();
         return delegate.select();
     }

@@ -21,7 +21,15 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+/**
+ * 这是一个hashSet 不可以被继承的
+ */
 final class SelectedSelectionKeySet extends AbstractSet<SelectionKey> {
+
+    /**
+     * 之前版本是有两个数组，后来做了些优化
+     */
+
 
     SelectionKey[] keys;
     int size;
@@ -30,6 +38,11 @@ final class SelectedSelectionKeySet extends AbstractSet<SelectionKey> {
         keys = new SelectionKey[1024];
     }
 
+    /**
+     * 应该主要是这个方法了
+     * @param o
+     * @return
+     */
     @Override
     public boolean add(SelectionKey o) {
         if (o == null) {

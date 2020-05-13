@@ -65,6 +65,10 @@ public class DefaultThreadFactory implements ThreadFactory {
     }
 
     public static String toPoolName(Class<?> poolType) {
+        /**
+         * 这个 poolType 是 NioEventLoopGroup
+         * 所以这里返回值为 nioEventLoopGroup
+         */
         ObjectUtil.checkNotNull(poolType, "poolType");
 
         String poolName = StringUtil.simpleClassName(poolType);
@@ -91,6 +95,9 @@ public class DefaultThreadFactory implements ThreadFactory {
         }
 
         prefix = poolName + '-' + poolId.incrementAndGet() + '-';
+        /**
+         * 这里prefix 是什么呢 nioEventLoopGroup-pooiId-
+         */
         this.daemon = daemon;
         this.priority = priority;
         this.threadGroup = threadGroup;
@@ -103,6 +110,11 @@ public class DefaultThreadFactory implements ThreadFactory {
 
     @Override
     public Thread newThread(Runnable r) {
+        /**
+         * 前面已经知道了 这个 perfix字符串内容
+         * 这里返回的是一个 FastThreadLocalThread
+         * 可见 NioEventLoop中的run()方法 是在对应的FastThreadLocalThread中轮询的
+         */
         Thread t = newThread(FastThreadLocalRunnable.wrap(r), prefix + nextId.incrementAndGet());
         try {
             if (t.isDaemon() != daemon) {

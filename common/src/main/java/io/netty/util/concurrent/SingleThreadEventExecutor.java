@@ -975,6 +975,10 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
 
     private void doStartThread() {
         assert thread == null;
+        /**
+         * 这个启动地方还是要注意下，要知道具体调用的地方
+         * @link {@linkplain io.netty.util.concurrent.ThreadPerTaskExecutor#execute}
+         */
         executor.execute(new Runnable() {
             @Override
             public void run() {
@@ -986,6 +990,10 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                 boolean success = false;
                 updateLastExecutionTime();
                 try {
+                    /**
+                     * 看到这里了 有必要看这个run()方法了
+                     * @link {@link io.netty.channel.nio.NioEventLoop#run()}
+                     */
                     SingleThreadEventExecutor.this.run();
                     success = true;
                 } catch (Throwable t) {

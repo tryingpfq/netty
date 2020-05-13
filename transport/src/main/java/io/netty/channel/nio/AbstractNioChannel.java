@@ -31,6 +31,7 @@ import io.netty.util.ReferenceCountUtil;
 import io.netty.util.ReferenceCounted;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+import sun.nio.ch.WindowsSelectorImpl;
 
 import java.io.IOException;
 import java.net.SocketAddress;
@@ -393,6 +394,8 @@ public abstract class AbstractNioChannel extends AbstractChannel {
                  * 这里就是jdk中nio注册了
                  * javaChannel()这个方法中还记得是什么东西吗，是在初始化NioServerSocketChannel的时候创建的
                  * sun.nio.ch.ServerSocketChannelImpl
+                 * 这个unwrappedSeledtor:{@link WindowsSelectorImpl}
+                 * 这个赋值的地方是在构造中:{@link NioEventLoop#NioEventLoop(io.netty.channel.nio.NioEventLoopGroup, java.util.concurrent.Executor, java.nio.channels.spi.SelectorProvider, io.netty.channel.SelectStrategy, io.netty.util.concurrent.RejectedExecutionHandler, io.netty.channel.EventLoopTaskQueueFactory)}
                  */
                 selectionKey = javaChannel().register(eventLoop().unwrappedSelector(), 0, this);
                 return;

@@ -30,6 +30,7 @@ import io.netty.util.internal.ReflectionUtil;
 import io.netty.util.internal.SystemPropertyUtil;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+import sun.nio.ch.WindowsSelectorProvider;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -139,13 +140,26 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                 rejectedExecutionHandler);
         this.provider = ObjectUtil.checkNotNull(selectorProvider, "selectorProvider");
         this.selectStrategy = ObjectUtil.checkNotNull(strategy, "selectStrategy");
+        /**
+         * 这个方法有必要了解一下了，对于每一个NioEventLoop都会open一个单独的Selector
+         */
         final SelectorTuple selectorTuple = openSelector();
+
         this.selector = selectorTuple.selector;
+        /**
+         * 里面返回的这个unwrappedSelector:{@link SelectedSelectionKeySetSelector}
+         * 有必要了解下这个哦：首先要知道，要操作系统上的API，就肯定和平台是有关的，
+         * SelectedSelectionKeySetSelector在这里面自然会有个委派，
+         * @see io.netty.channel.nio.SelectedSelectionKeySetSelector#delegate 这个是和操作系统有关的
+         */
         this.unwrappedSelector = selectorTuple.unwrappedSelector;
     }
 
     private static Queue<Runnable> newTaskQueue(
             EventLoopTaskQueueFactory queueFactory) {
+        /**
+         * 这个队列可以了解下 主要是用来处理外部任务 需要到NioEventLoop线程执行的
+         */
         if (queueFactory == null) {
             return newTaskQueue0(DEFAULT_MAX_PENDING_TASKS);
         }
@@ -170,6 +184,9 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     private SelectorTuple openSelector() {
         final Selector unwrappedSelector;
         try {
+            /**
+             * 这个很明显了是:@link {@link WindowsSelectorProvider}
+             */
             unwrappedSelector = provider.openSelector();
         } catch (IOException e) {
             throw new ChannelException("failed to open a new selector", e);
@@ -204,6 +221,9 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         }
 
         final Class<?> selectorImplClass = (Class<?>) maybeSelectorImplClass;
+        /**
+         * 连接下这个keySet
+         */
         final SelectedSelectionKeySet selectedKeySet = new SelectedSelectionKeySet();
 
         Object maybeException = AccessController.doPrivileged(new PrivilegedAction<Object>() {
@@ -438,6 +458,9 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             try {
                 int strategy;
                 try {
+                    /**
+                     * 选择策略
+                     */
                     strategy = selectStrategy.calculateStrategy(selectNowSupplier, hasTasks());
                     switch (strategy) {
                     case SelectStrategy.CONTINUE:
@@ -506,7 +529,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                                 selectCnt - 1, selector);
                     }
                     selectCnt = 0;
-                } else if (unexpectedSelectorWakeup(selectCnt)) { // Unexpected wakeup (unusual case)
+                } else if (unexpectedSelectorWakeup(selectCnt)) { // 这里处理了jdk 空轮询问题
                     selectCnt = 0;
                 }
             } catch (CancelledKeyException e) {
@@ -644,6 +667,9 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             // See https://github.com/netty/netty/issues/2363
             selectedKeys.keys[i] = null;
 
+            /**
+             * attach 是什么东西呢？ AbstractNioChannel
+             */
             final Object a = k.attachment();
 
             if (a instanceof AbstractNioChannel) {

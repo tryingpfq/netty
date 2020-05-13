@@ -73,6 +73,11 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
         }
 
         if (executor == null) {
+            /**
+             * 这个executor用来干嘛的呢 个人觉得是用来启动nioEventLoop线程的
+             * @link {@link SingleThreadEventExecutor#execute(java.lang.Runnable, boolean)}中的 doStartThread()方法
+             * 就会调用
+             */
             executor = new ThreadPerTaskExecutor(newDefaultThreadFactory());
         }
 
@@ -81,6 +86,10 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
         for (int i = 0; i < nThreads; i ++) {
             boolean success = false;
             try {
+                /**
+                 * 这个children数据里面是什么东西呢
+                 * 是NioEventLoop
+                 */
                 children[i] = newChild(executor, args);
                 success = true;
             } catch (Exception e) {
@@ -108,6 +117,9 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
             }
         }
 
+        /**
+         * 这个chooser 没猜错的话就是NioEventLoop 的一个选择器哦
+         */
         chooser = chooserFactory.newChooser(children);
 
         final FutureListener<Object> terminationListener = new FutureListener<Object>() {
