@@ -61,6 +61,12 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
 
         @Override
         public void read() {
+            /**
+             * 这里的read 就是 NioServerSockeChannel 对有新连接的读取
+             */
+            /**
+             * 新连接的接收，必须是要在当前线程
+             */
             assert eventLoop().inEventLoop();
             final ChannelConfig config = config();
             final ChannelPipeline pipeline = pipeline();
@@ -72,15 +78,21 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
             try {
                 try {
                     do {
+                        /**
+                         * 核心在这里 这个readBuf是个新连接的集合
+                         */
                         int localRead = doReadMessages(readBuf);
                         if (localRead == 0) {
                             break;
                         }
                         if (localRead < 0) {
                             closed = true;
-                            break;
+                            break;.
                         }
 
+                        /**
+                         * {@link io.netty.channel.DefaultMaxMessagesRecvByteBufAllocator.MaxMessageHandle#continueReading()}
+                         */
                         allocHandle.incMessagesRead(localRead);
                     } while (allocHandle.continueReading());
                 } catch (Throwable t) {
@@ -90,6 +102,10 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
                 int size = readBuf.size();
                 for (int i = 0; i < size; i ++) {
                     readPending = false;
+                    /**
+                     * 逻辑应该是在这里面了 希望进去不会晕
+                     * 注意 这里的pipeline是服务端NioServerSocketChannel的
+                     */
                     pipeline.fireChannelRead(readBuf.get(i));
                 }
                 readBuf.clear();
@@ -98,7 +114,6 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
 
                 if (exception != null) {
                     closed = closeOnReadError(exception);
-
                     pipeline.fireExceptionCaught(exception);
                 }
 

@@ -77,6 +77,9 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
     }
 
     PriorityQueue<ScheduledFutureTask<?>> scheduledTaskQueue() {
+        /**
+         * 定时任务队列 会根据结束时间排序
+         */
         if (scheduledTaskQueue == null) {
             scheduledTaskQueue = new DefaultPriorityQueue<ScheduledFutureTask<?>>(
                     SCHEDULED_FUTURE_TASK_COMPARATOR,

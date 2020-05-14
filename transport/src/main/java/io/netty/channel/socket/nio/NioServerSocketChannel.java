@@ -156,10 +156,21 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
 
     @Override
     protected int doReadMessages(List<Object> buf) throws Exception {
+        /**
+         * javaChannel :ServerSocketChannel
+         * 如果有新的客户端连接，这里就会获得一个先的连接，目测这个方法是不会被阻塞的 {不是不会被阻塞 还是有连接的时候才会执行到这里}
+         *
+         * ch:SocketChannelImpl
+         */
         SocketChannel ch = SocketUtils.accept(javaChannel());
 
         try {
             if (ch != null) {
+                /**
+                 * 问题来了
+                 * 为什么服务端穿件SocketChannel的时候，是通过反射
+                 * 而这里是通过调用构造函数
+                 */
                 buf.add(new NioSocketChannel(this, ch));
                 return 1;
             }

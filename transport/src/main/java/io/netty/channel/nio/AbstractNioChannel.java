@@ -72,7 +72,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
 
     /**
      * Create a new instance
-     *
+     * 这个方法不管是服务端 NioServerSocketChannel 还是客户端 NioSocketChannel 都要进行调用
      * @param parent            the parent {@link Channel} by which this instance was created. May be {@code null}
      * @param ch                the underlying {@link SelectableChannel} on which it operates
      * @param readInterestOp    the ops to set to receive data from the {@link SelectableChannel}
@@ -396,6 +396,18 @@ public abstract class AbstractNioChannel extends AbstractChannel {
                  * sun.nio.ch.ServerSocketChannelImpl
                  * 这个unwrappedSeledtor:{@link WindowsSelectorImpl}
                  * 这个赋值的地方是在构造中:{@link NioEventLoop#NioEventLoop(io.netty.channel.nio.NioEventLoopGroup, java.util.concurrent.Executor, java.nio.channels.spi.SelectorProvider, io.netty.channel.SelectStrategy, io.netty.util.concurrent.RejectedExecutionHandler, io.netty.channel.EventLoopTaskQueueFactory)}
+                 */
+
+                /**
+                 * 上面说的是NioServerSocketChannel的注册 并且这个是一个注册是的accept事件
+                 *  其实在有新的客户端连接后，这里注册是的NioSocketChannel
+                 *  javaChannel() -> SocketChannelImpl
+                 *  这个unwrappedSeledtor:{@link WindowsSelectorImpl}
+                 */
+
+                /**
+                 * register中，如果selector中没有找到key,就会新建一个，并且要把this attach进去
+                 * 目测每个连接对应一个key
                  */
                 selectionKey = javaChannel().register(eventLoop().unwrappedSelector(), 0, this);
                 return;

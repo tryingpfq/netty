@@ -15,6 +15,7 @@
  */
 package io.netty.channel;
 
+import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
@@ -363,7 +364,13 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
 
     static void invokeChannelRead(final AbstractChannelHandlerContext next, Object msg) {
         final Object m = next.pipeline.touch(ObjectUtil.checkNotNull(msg, "msg"), next);
+        /**
+         * 获取NioEventLoop
+         */
         EventExecutor executor = next.executor();
+        /**
+         * 对于新的连接来说，肯定是在当前线程的
+         */
         if (executor.inEventLoop()) {
             next.invokeChannelRead(m);
         } else {
@@ -379,6 +386,13 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     private void invokeChannelRead(Object msg) {
         if (invokeHandler()) {
             try {
+                /**
+                 * 这里面会有点绕 其实我暂时还不是很明白，但对于服务端pipeline来说，
+                 * 当有新的连接，会到ServerBootstrapAcceptor中去，
+                 * 还记得这个东西吗，就是在 {@link ServerBootstrap#init} 初始化的
+                 * 这里我大概捋了一下 对于服务度这个pipelie，新连接来后，这块执行流程
+                 * HeadContext -> ConnectLogHandler -> ServerBootstrapAcceptor(ServerBootstrap中的一个内部类)
+                 */
                 ((ChannelInboundHandler) handler()).channelRead(this, msg);
             } catch (Throwable t) {
                 invokeExceptionCaught(t);

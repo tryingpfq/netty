@@ -223,14 +223,37 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         @Override
         @SuppressWarnings("unchecked")
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
+            /**
+             * 这个child是什么呢 当然是 NioSocketChannel
+             */
             final Channel child = (Channel) msg;
 
+            /**
+             * 在初始化的时候，有初始化下面的东西
+             * 这个handler注意下哦：会是你添加的时候的一个内部类
+             * {@code
+             *  serverBootstrap.group(boss,group)
+             *      .channle(NioServerSocketChannel.class)
+             *      .option()
+             *      .childOpetion()
+             *      .childHandler(new ChannelInitializer<SocketChannel>){   //这里的childHandler就会是这个class的一个内部类
+             *          @Override
+             *          public void initChannel(SocketChannel sc){      // 这个方法应该是这个内部内的主要用途了
+             *                 ChannelPipeline pipeline = sc.pipeline;
+             *                 pipeline.addlast();
+             *          }
+             *      }
+             * }
+             */
             child.pipeline().addLast(childHandler);
 
             setChannelOptions(child, childOptions, logger);
             setAttributes(child, childAttrs);
 
             try {
+                /**
+                 * 这里就是进行NioEvetLoop注册了
+                 */
                 childGroup.register(child).addListener(new ChannelFutureListener() {
                     @Override
                     public void operationComplete(ChannelFuture future) throws Exception {

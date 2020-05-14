@@ -233,6 +233,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     }
 
     private void addLast0(AbstractChannelHandlerContext newCtx) {
+        /**
+         * 这里应该很方便理解吧 尾插法，但要在tail之前呀
+         */
         AbstractChannelHandlerContext prev = tail.prev;
         newCtx.prev = prev;
         newCtx.next = tail;
@@ -924,6 +927,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     @Override
     public final ChannelPipeline fireChannelRead(Object msg) {
+        /**
+         * 入栈 这里传入的是head
+         */
         AbstractChannelHandlerContext.invokeChannelRead(head, msg);
         return this;
     }

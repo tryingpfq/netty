@@ -517,6 +517,10 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                     } finally {
                         // Ensure we always run tasks.
                         final long ioTime = System.nanoTime() - ioStartTime;
+                        /**
+                         * 这里应该是1:1的，因为ioRatio默认是100
+                         * 这个时间就是处理processSelectedKeys() 的时间
+                         */
                         ranTasks = runAllTasks(ioTime * (100 - ioRatio) / ioRatio);
                     }
                 } else {

@@ -275,18 +275,31 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         }
     }
 
+    /**
+     * 任务聚合
+     * @return
+     */
     private boolean fetchFromScheduledTaskQueue() {
         if (scheduledTaskQueue == null || scheduledTaskQueue.isEmpty()) {
             return true;
         }
         long nanoTime = AbstractScheduledEventExecutor.nanoTime();
         for (;;) {
+            /**
+             * 从定时任务中取出一个任务 并移除
+             */
             Runnable scheduledTask = pollScheduledTask(nanoTime);
             if (scheduledTask == null) {
                 return true;
             }
+            /**
+             * 添加到另一个队列中去
+             */
             if (!taskQueue.offer(scheduledTask)) {
                 // No space left in the task queue add it back to the scheduledTaskQueue so we pick it up again.
+                /**
+                 * 如果加入失败 要重新添加到定时任务中
+                 */
                 scheduledTaskQueue.add((ScheduledFutureTask<?>) scheduledTask);
                 return false;
             }
@@ -456,8 +469,12 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     /**
      * Poll all tasks from the task queue and run them via {@link Runnable#run()} method.  This method stops running
      * the tasks in the task queue and returns if it ran longer than {@code timeoutNanos}.
+     * 这个时间
      */
     protected boolean runAllTasks(long timeoutNanos) {
+        /**
+         * 任务聚合
+         */
         fetchFromScheduledTaskQueue();
         Runnable task = pollTask();
         if (task == null) {
@@ -475,6 +492,10 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
 
             // Check timeout every 64 tasks because nanoTime() is relatively expensive.
             // XXX: Hard-coded value - will make it configurable if it is really a problem.
+            /**
+             * 默认是执行64个任务 就会检查一下 是否超时
+             * 为什么要这样呢 而不是每次都判断呢 因为ScheduledFutureTask.nanoTime() 这个比较耗时
+             */
             if ((runTasks & 0x3F) == 0) {
                 lastExecutionTime = ScheduledFutureTask.nanoTime();
                 if (lastExecutionTime >= deadline) {
@@ -982,6 +1003,11 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         executor.execute(new Runnable() {
             @Override
             public void run() {
+                /**
+                 * 这个是干嘛的呢 是对NioEventLoop所在的真正的线程进行引用
+                 * 这个run方法，应该知道是在线程工厂创建的线程中调用的
+                 * {@link io.netty.util.concurrent.DefaultThreadFactory#newThread(java.lang.Runnable)}
+                 */
                 thread = Thread.currentThread();
                 if (interrupted) {
                     thread.interrupt();

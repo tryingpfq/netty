@@ -16,10 +16,12 @@
 package io.netty.channel;
 
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.nio.AbstractNioByteChannel;
 import io.netty.channel.socket.ChannelOutputShutdownEvent;
 import io.netty.channel.socket.ChannelOutputShutdownException;
 import io.netty.util.DefaultAttributeMap;
 import io.netty.util.ReferenceCountUtil;
+import io.netty.util.concurrent.SingleThreadEventExecutor;
 import io.netty.util.internal.ObjectUtil;
 import io.netty.util.internal.PlatformDependent;
 import io.netty.util.internal.UnstableApi;
@@ -475,8 +477,22 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             }
 
             /**
-             * 设置NioServerSocketChannel的线程 这里不怎么明白
+             * 服务端启动的时候，这个地方的子类unsafe:
+             * @see io.netty.channel.nio.AbstractNioMessageChannel.NioMessageUnsafe
+             *
+             * 对于客户端新连接的话 这个地方的子类unsafe:
+             * @see AbstractNioByteChannel.NioByteUnsafe
+             *
+             */
+
+            /**
+             * 设置NioServerSocketChannel的线程
              * 先记住这个EventLoop 是 bossGroup中child[]中的一个NioEventLoop线程
+             *
+             * 这里注意哦 上面写的注释是针对启服时候的哦
+             *
+             * 对于服务端启动后，当有新的客户端连接哦，那么NioSocketChannel 也会在这里进行注册的
+             * 此时的EventLoop 是 workGroup中child[]中的一个NioEventLoop线程
              */
             AbstractChannel.this.eventLoop = eventLoop;
 
@@ -484,6 +500,17 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 register0(promise);
             } else {
                 try {
+                    /**
+                     * 这里说点我的理解吧
+                     * 对于服务端刚启动的时候：会是在main线程执行到这里，所以会走到这里，自然会执行下面
+                     * 并且会去启动这个线程 {@link SingleThreadEventExecutor#execute}
+                     *
+                     * 如果是服务端有接收到客户端的新的连接后，这个时候应该是服务端的select线程执行到这里
+                     * 自然也不是在eventLoop这个线程中 而是在select的线程中，也就是上面说的服务端启动时候，在这里启动的线程
+                     * 也会 {@link SingleThreadEventExecutor#execute}
+                     * 首先是会把任务加到普通队列中去，这个队列是在哪里消费的应该知道吧，在NioEventLoop.run()方法
+                     * 但这里要注意下:对于新连接来说，这个eventLoop可能是已经启动了的。
+                     */
                     eventLoop.execute(new Runnable() {
                         @Override
                         public void run() {
@@ -522,7 +549,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 // Only fire a channelActive if the channel has never been registered. This prevents firing
                 // multiple channel actives if the channel is deregistered and re-registered.
                 /**
-                 * 住一下这里了 这里返回的会是false
+                 * 注一下这里了 这里返回的会是false
                  */
                 if (isActive()) {
                     if (firstRegistration) {
