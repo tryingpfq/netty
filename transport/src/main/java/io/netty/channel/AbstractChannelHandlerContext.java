@@ -967,6 +967,10 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         // We must call setAddComplete before calling handlerAdded. Otherwise if the handlerAdded method generates
         // any pipeline events ctx.handler() will miss them because the state will not allow it.
         if (setAddComplete()) {
+            /**
+             * 这里我们一这个为类 看一下吧
+             * @see ChannelInitializer#handlerAdded(io.netty.channel.ChannelHandlerContext)
+             */
             handler().handlerAdded(this);
         }
     }

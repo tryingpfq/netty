@@ -207,8 +207,15 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     public final ChannelPipeline addLast(EventExecutorGroup group, String name, ChannelHandler handler) {
         final AbstractChannelHandlerContext newCtx;
         synchronized (this) {
+            /**
+             * 检查
+             */
             checkMultiplicity(handler);
 
+            /**
+             * 对于每添加一个一个Handler,其实会新建一个 AbstractChannelHandlerContext,并包裹这个handler
+             * 在pipeline中，每个节点是一个Context
+             */
             newCtx = newContext(group, filterName(name, handler), handler);
 
             addLast0(newCtx);
@@ -228,6 +235,10 @@ public class DefaultChannelPipeline implements ChannelPipeline {
                 return this;
             }
         }
+        /**
+         * 其实这就是一个回调，还记得那个内部类:{@link io.netty.channel.ChannelInitializer} 嘛
+         * @see io.netty.channel.ChannelInitializer#initChannel(io.netty.channel.Channel) 就会在下面进行回调的
+         */
         callHandlerAdded0(newCtx);
         return this;
     }
@@ -606,6 +617,12 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     private static void checkMultiplicity(ChannelHandler handler) {
         if (handler instanceof ChannelHandlerAdapter) {
             ChannelHandlerAdapter h = (ChannelHandlerAdapter) handler;
+            /**
+             * @see ChannelHandler.Sharable 有必要了解下
+             * 对于一个handler对象来说，添加了一次就会被标记为已经添加
+             * 但如果某些handler是一个单例，如果不用这个注解标记，就只能在一个Channel中被添加，要向重复
+             * 利用，就的用这个注解。
+             */
             if (!h.isSharable() && h.added) {
                 throw new ChannelPipelineException(
                         h.getClass().getName() +
