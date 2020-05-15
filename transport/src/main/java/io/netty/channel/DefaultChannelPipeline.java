@@ -208,7 +208,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         final AbstractChannelHandlerContext newCtx;
         synchronized (this) {
             checkMultiplicity(handler);
-
+            /**
+             * 创建Context
+             */
             newCtx = newContext(group, filterName(name, handler), handler);
 
             addLast0(newCtx);
@@ -228,6 +230,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
                 return this;
             }
         }
+        // 回调
         callHandlerAdded0(newCtx);
         return this;
     }
@@ -606,6 +609,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     private static void checkMultiplicity(ChannelHandler handler) {
         if (handler instanceof ChannelHandlerAdapter) {
             ChannelHandlerAdapter h = (ChannelHandlerAdapter) handler;
+            // 这里有必要了解下 io.netty.channel.ChannelHandler.Sharable这个注解
+            // 什么意思呢 也就是说 对于一个handler,如果是一个单例，是只能被添加一次，即只能
+            // 添加到一个channel 的pipelie中，要想能够多次添加 就要用到这个注解了。
             if (!h.isSharable() && h.added) {
                 throw new ChannelPipelineException(
                         h.getClass().getName() +
@@ -617,6 +623,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     private void callHandlerAdded0(final AbstractChannelHandlerContext ctx) {
         try {
+            /**
+             * 继续调用这个
+             */
             ctx.callHandlerAdded();
         } catch (Throwable t) {
             boolean removed = false;

@@ -101,14 +101,14 @@ public abstract class ChannelInitializer<C extends Channel> extends ChannelInbou
 
     /**
      * {@inheritDoc} If override this method ensure you call super!
+     * 回调
      */
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
         if (ctx.channel().isRegistered()) {
-            // This should always be true with our current DefaultChannelPipeline implementation.
-            // The good thing about calling initChannel(...) in handlerAdded(...) is that there will be no ordering
-            // surprises if a ChannelInitializer will add another ChannelInitializer. This is as all handlers
-            // will be added in the expected order.
+            /**
+             * 调用这个init方法 进去看里面是干嘛用的哈
+             */
             if (initChannel(ctx)) {
 
                 // We are done with init the Channel, removing the initializer now.
@@ -124,6 +124,10 @@ public abstract class ChannelInitializer<C extends Channel> extends ChannelInbou
 
     @SuppressWarnings("unchecked")
     private boolean initChannel(ChannelHandlerContext ctx) throws Exception {
+        /**
+         * 其实就是会把用户自定义的逻辑handler 添加到pipelie中
+         * 然后会移除自己，因为本身这个handler只有起到这个作用
+         */
         if (initMap.add(ctx)) { // Guard against re-entrance.
             try {
                 initChannel((C) ctx.channel());
