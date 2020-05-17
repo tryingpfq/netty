@@ -125,6 +125,10 @@ final class PoolThreadCache {
         if (cacheSize > 0 && numCaches > 0) {
             @SuppressWarnings("unchecked")
             MemoryRegionCache<T>[] cache = new MemoryRegionCache[numCaches];
+            /**
+             * 对于tiny来说，cacheSize的默认值是512，numCaches是512 >>> 4 = 32
+             * 对于Small来说，cacheSize的默认值是256，cacheSize和pageShift有关-pageSize
+             */
             for (int i = 0; i < cache.length; i++) {
                 // TODO: maybe use cacheSize / cache.length
                 cache[i] = new SubPageMemoryRegionCache<T>(cacheSize, sizeClass);
