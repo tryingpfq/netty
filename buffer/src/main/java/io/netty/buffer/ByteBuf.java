@@ -249,6 +249,7 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
 
     /**
      * Returns the number of bytes (octets) this buffer can contain.
+     * 获取容量
      */
     public abstract int capacity();
 
@@ -263,13 +264,12 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
     public abstract ByteBuf capacity(int newCapacity);
 
     /**
-     * Returns the maximum allowed capacity of this buffer. This value provides an upper
-     * bound on {@link #capacity()}.
+     * 最大容量 因为bytebuf有个最大容量值
      */
     public abstract int maxCapacity();
 
     /**
-     * Returns the {@link ByteBufAllocator} which created this buffer.
+     * 分配
      */
     public abstract ByteBufAllocator alloc();
 
@@ -321,7 +321,7 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
     public abstract ByteBuf asReadOnly();
 
     /**
-     * Returns the {@code readerIndex} of this buffer.
+     * 获取可读开始索引
      */
     public abstract int readerIndex();
 
@@ -332,11 +332,13 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      *         if the specified {@code readerIndex} is
      *            less than {@code 0} or
      *            greater than {@code this.writerIndex}
+     * 读取bytebuf 并且设置当前可是读位置
      */
     public abstract ByteBuf readerIndex(int readerIndex);
 
     /**
      * Returns the {@code writerIndex} of this buffer.
+     * 获取写索引
      */
     public abstract int writerIndex();
 
@@ -406,12 +408,14 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
     /**
      * Returns the number of readable bytes which is equal to
      * {@code (this.writerIndex - this.readerIndex)}.
+     * 当前可读的长度：wirteIndex - readIndex
      */
     public abstract int readableBytes();
 
     /**
      * Returns the number of writable bytes which is equal to
      * {@code (this.capacity - this.writerIndex)}.
+     * 当前可写的长度：capacity-writeIndex
      */
     public abstract int writableBytes();
 
@@ -1365,6 +1369,7 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      *
      * @throws IndexOutOfBoundsException
      *         if {@code this.readableBytes} is less than {@code 1}
+     * 读取一个byte,读索引会加1
      */
     public abstract byte  readByte();
 
@@ -1776,6 +1781,7 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
      * The 24 high-order bits of the specified value are ignored.
      * If {@code this.writableBytes} is less than {@code 1}, {@link #ensureWritable(int)}
      * will be called in an attempt to expand capacity to accommodate.
+     * 写一个byte writeIndex+1
      */
     public abstract ByteBuf writeByte(int value);
 

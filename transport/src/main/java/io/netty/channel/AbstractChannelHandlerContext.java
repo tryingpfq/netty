@@ -369,7 +369,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
          */
         EventExecutor executor = next.executor();
         /**
-         * 对于新的连接来说，肯定是在当前线程的
+         * 对于新的连接来说，或者这条连接的读，肯定是在当前线程的
          */
         if (executor.inEventLoop()) {
             next.invokeChannelRead(m);
@@ -392,6 +392,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
                  * 还记得这个东西吗，就是在 {@link ServerBootstrap#init} 初始化的
                  * 这里我大概捋了一下 对于服务度这个pipelie，新连接来后，这块执行流程
                  * HeadContext -> ConnectLogHandler -> ServerBootstrapAcceptor(ServerBootstrap中的一个内部类)
+                 * 对于客户端新的连接上的传播，同样会到客户端连接的head中去
                  */
                 ((ChannelInboundHandler) handler()).channelRead(this, msg);
             } catch (Throwable t) {
@@ -968,8 +969,8 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         // any pipeline events ctx.handler() will miss them because the state will not allow it.
         if (setAddComplete()) {
             /**
-             * 这里我们一这个为类 看一下吧
-             * @see ChannelInitializer#handlerAdded(io.netty.channel.ChannelHandlerContext)
+             * 这里我们看：还记得服务端启动的时候，添加的那个匿名内部类
+             * @see ChannelInitializer 这里面的init方法就有一些操作，待会进去看
              */
             handler().handlerAdded(this);
         }

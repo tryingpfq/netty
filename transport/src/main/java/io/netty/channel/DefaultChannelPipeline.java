@@ -472,6 +472,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     }
 
     private AbstractChannelHandlerContext remove(final AbstractChannelHandlerContext ctx) {
+        /**
+         * 投节点和尾节点是不可以移除的
+         */
         assert ctx != head && ctx != tail;
 
         synchronized (this) {
@@ -496,6 +499,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
                 return ctx;
             }
         }
+        /**
+         * 回调
+         */
         callHandlerRemoved0(ctx);
         return ctx;
     }
@@ -634,6 +640,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     private void callHandlerAdded0(final AbstractChannelHandlerContext ctx) {
         try {
+            /**
+             * 继续调用这个
+             */
             ctx.callHandlerAdded();
         } catch (Throwable t) {
             boolean removed = false;
@@ -744,7 +753,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     @Override
     public final ChannelHandlerContext context(ChannelHandler handler) {
         ObjectUtil.checkNotNull(handler, "handler");
-
+        /**
+         * 找到这个节点，从头部开始寻找
+         */
         AbstractChannelHandlerContext ctx = head.next;
         for (;;) {
 
@@ -753,6 +764,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
             }
 
             if (ctx.handler() == handler) {
+                // 找到就开始返回
                 return ctx;
             }
 
@@ -945,7 +957,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     @Override
     public final ChannelPipeline fireChannelRead(Object msg) {
         /**
-         * 入栈 这里传入的是head
+         * 入栈 这里传入的是head inbound事件开始在pipelie传播的入口 接着肯定是headContext
          */
         AbstractChannelHandlerContext.invokeChannelRead(head, msg);
         return this;
@@ -1038,6 +1050,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     @Override
     public final ChannelFuture write(Object msg) {
+        /**
+         * 写事件 是先从tail开始的
+         */
         return tail.write(msg);
     }
 
@@ -1324,6 +1339,10 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
+            /**
+             * 这个方法的调用，是inbound事件没有被处理，才会传到Tail这里来，然后在这里就打印错误，并要
+             * 释放掉这个msg,对于客户端读写是ByteBuf 新连接会是Message
+             */
             onUnhandledInboundMessage(ctx, msg);
         }
 
